@@ -6,7 +6,7 @@ Godot with the patches Isaac's projects need. Each `<version>-patched` branch st
 
 | Commit | Why | Upstream |
 |---|---|---|
-| macOS: Size the embedded OpenGL view when it's created | Agents' Godot runs render offscreen in embedded mode, which left Compatibility projects (pandaboom, spaceminer) at 0x0 | Not sent yet |
+| macOS: Size the embedded OpenGL view when it's created | Agents' Godot runs render offscreen in embedded mode, which left Compatibility projects (pandaboom, spaceminer) at 0x0 | Not sent. Upstream treats `--embedded` as editor-only ([#124020](https://github.com/godotengine/godot/pull/124020)), where the editor's resize hides the bug, and closed an AI-written fix for standalone embedded runs as spam ([#123721](https://github.com/godotengine/godot/pull/123721)) |
 
 ## Build
 
@@ -30,3 +30,7 @@ git checkout 4.7.2-patched -- PATCHES.md && git commit -m "Describe the patches"
 ```
 
 Then build, push the branch to `origin`, and update the table.
+
+### 4.8 needs one more patch
+
+From 4.8, `Main::setup` in `main/main.cpp` aborts `--embedded` unless it has the editor's `--remote-debug`, `--wid` and `--editor-pid`, and a debug server connection ([#124020](https://github.com/godotengine/godot/pull/124020)). The wrapper runs `--embedded` with the local debugger (`-d`) and none of those, so every agent run would print `"--embedded" requires "--remote-debug <uri>"...` and quit. The 4.8 branch needs a patch that lets `--embedded` run with any attached debugger, the local one included, and still aborts without one, since the embedded display server can't start without a debugger.
