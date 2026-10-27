@@ -69,8 +69,8 @@ Error GLManagerEmbedded::create_context(GLWindow &p_win) {
 Error GLManagerEmbedded::window_create(DisplayServerEnums::WindowID p_window_id, CALayer *p_layer, int p_width, int p_height) {
 	GLWindow win;
 	win.layer = p_layer;
-	win.width = 0;
-	win.height = 0;
+	win.width = p_width;
+	win.height = p_height;
 
 	if (create_context(win) != OK) {
 		return FAILED;
@@ -88,7 +88,7 @@ void GLManagerEmbedded::window_resize(DisplayServerEnums::WindowID p_window_id, 
 
 	GLWindow &win = el->get();
 
-	if (win.width == (uint32_t)p_width && win.height == (uint32_t)p_height) {
+	if (win.is_valid && win.width == (uint32_t)p_width && win.height == (uint32_t)p_height) {
 		return;
 	}
 
@@ -227,6 +227,12 @@ void GLManagerEmbedded::window_make_current(DisplayServerEnums::WindowID p_windo
 void GLManagerEmbedded::swap_buffers() {
 	GLWindow &win = windows[current_window];
 	[win.context flushBuffer];
+
+	if (!win.is_valid && win.width > 0 && win.height > 0) {
+		// GL functions load after window_create, so a window that hasn't been resized since gets its framebuffers here.
+		window_resize(current_window, win.width, win.height);
+		return;
+	}
 
 	static bool last_valid = false;
 	if (!win.is_valid) {
